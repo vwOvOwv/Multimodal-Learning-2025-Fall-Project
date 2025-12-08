@@ -14,7 +14,7 @@ cachey==0.2.1
 certifi==2024.6.2
 charset-normalizer==3.3.2
 click==8.1.7
-clip==1.0
+git+https://github.com/openai/CLIP.git
 clip-interrogator==0.6.0
 cloudpickle==3.0.0
 comm==0.2.2
@@ -38,7 +38,7 @@ einops==0.8.0
 executing==2.0.1
 filelock==3.15.4
 filterpy==1.4.5
-flash_attn==2.7.4.post1
+# flash_attn==2.7.4.post1   # Install manually from https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 flexcache==0.3
 flexparser==0.3.1
 fonttools==4.53.0
@@ -48,7 +48,8 @@ fsspec==2024.6.1
 ftfy==6.2.0
 gitdb==4.0.11
 GitPython==3.1.43
-glide-text2im==0.0.0
+# glide-text2im==0.0.0
+git+https://github.com/openai/glide-text2im.git
 HeapDict==1.0.1
 hsluv==5.0.4
 huggingface-hub==0.23.4
@@ -72,7 +73,7 @@ kiwisolver==1.4.5
 kornia==0.7.3
 kornia_rs==0.1.5
 lazy_loader==0.4
-llava==1.7.0.dev0
+# llava==1.7.0.dev0     # seem to be not used
 llvmlite==0.43.0
 locket==1.0.0
 magicgui==0.8.3
