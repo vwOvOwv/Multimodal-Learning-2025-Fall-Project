@@ -1,3 +1,6 @@
+import os
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+
 import argparse
 from PIL import Image
 import numpy as np
@@ -12,7 +15,7 @@ import torchvision
 
 from transformers import AutoTokenizer, CLIPTextModel
 from diffusers import DDIMScheduler, AutoencoderKL, UNet2DConditionModel
-from datasets import load_from_disk
+from datasets import load_from_disk, load_dataset
 
 
 def parse_args():
@@ -357,7 +360,8 @@ def get_dataloader(args, dataset_name, tokenizer):
     """
     Get training and validation datasets
     """
-    ds = load_from_disk(args.train_data_dir)['train']
+    # ds = load_from_disk(args.train_data_dir)['train']
+    ds = load_dataset(args.train_data_dir, split='train')
 
     split_ratio = 0.9
     start, middle, end = 0, int(len(ds) * split_ratio), len(ds)
