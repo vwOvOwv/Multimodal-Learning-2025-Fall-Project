@@ -35,8 +35,13 @@ class LDDinov2(Model):
     """
     def __init__(self):
         super().__init__()
+
         # load DINOv2 backbone
-        self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+        self.dino = torch.hub.load("./dinov2", model='dinov2_vitl14', source='local', pretrained=False)
+        # self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+        weight_path = "./pretrained_weights/dinov2_vitl14_pretrain.pth"
+        state_dict = torch.load(weight_path, map_location='cuda')
+        self.dino.load_state_dict(state_dict)
         
         # change configuration based on latent image input
         self.dino.patch_size = 2
