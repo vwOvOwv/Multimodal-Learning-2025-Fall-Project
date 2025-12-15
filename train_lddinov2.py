@@ -19,9 +19,10 @@ import diffusers
 from diffusers.optimization import get_scheduler
 from diffusers import AutoencoderKL, SchedulerMixin
 
-from accelerate import Accelerator
+from accelerate import Accelerator, InitProcessGroupKwargs
 from accelerate.logging import get_logger
 from accelerate.utils import ProjectConfiguration, set_seed
+from datetime import timedelta
 
 from dataset import InstructCLIPDataset
 from model import LDDinov2, get_features
@@ -163,6 +164,7 @@ def main(args):
         mixed_precision=args.mixed_precision,
         log_with=args.report_to,
         project_config=accelerator_project_config,
+        kwargs_handlers=[InitProcessGroupKwargs(timeout=timedelta(seconds=7200))]
     )
 
     # If passed along, set the training seed now.
@@ -182,7 +184,12 @@ def main(args):
     model = LDDinov2()
     
     # load DINOv2 checkpoint to compute ground-truth features later
-    dino_ori = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+    # dino_ori = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+    dino_ori = torch.hub.load("./dinov2", model='dinov2_vitl14', source='local', pretrained=False)
+    weight_path = "./pretrained_weights/dinov2_vitl14_pretrain.pth"
+    state_dict = torch.load(weight_path, map_location='cuda')
+    dino_ori.load_state_dict(state_dict)
+
     dino_ori.eval().requires_grad_(False).to(accelerator.device, dtype=weight_dtype)
     
     # add model hook to extract features from intermediate layers
