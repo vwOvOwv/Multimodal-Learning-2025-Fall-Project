@@ -334,22 +334,28 @@ def get_sd_components(args, device, weight_dtype):
     Get Stable Diffusion components (tokenizer, noise scheduler, VAE, UNet, text encoder)
     and load them to GPU device with weight_dtype
     """
+    # print("get_sd_components called")
     tokenizer = AutoTokenizer.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="tokenizer",
         use_fast=False,
     )
+    # print("tokenizer loaded")
     noise_scheduler = DDIMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
     noise_scheduler.num_inference_steps = 1
+    # print("noise_scheduler loaded")
     text_encoder = CLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",
     )
+    # print("text_encoder loaded")
     vae = AutoencoderKL.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="vae",
     )
+    # print("vae loaded")
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",
     )
+    # print("unet loaded")
     vae.requires_grad_(False).to(device, dtype=weight_dtype)
     unet.requires_grad_(False).to(device, dtype=weight_dtype)
     text_encoder.requires_grad_(False).to(device, dtype=weight_dtype)

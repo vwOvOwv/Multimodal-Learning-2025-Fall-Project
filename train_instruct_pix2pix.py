@@ -377,7 +377,7 @@ def main():
     
     # define our model and dataset
     iclip = InstructCLIP()
-    iclip.load_pretrained('ckpts/instructclip/final.ckpt')
+    iclip.load_pretrained('/home/data10T/lpy/mml-proj/ckpts/instructclip/final.ckpt')
     iclip.requires_grad_(False).to(accelerator.device, dtype=weight_dtype)
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.

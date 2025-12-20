@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--instructclip_ckpt",
         type=str,
-        default="ckpts/instructclip/final.ckpt",
+        default="/home/data10T/lpy/mml-proj/ckpts/instructclip/final.ckpt",
         help=(
             "Path to Instruct-CLIP checkpoint"
         )

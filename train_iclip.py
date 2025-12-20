@@ -128,7 +128,10 @@ def run_model(
     loss_text_decoder = 0
     lst = [(text_feat, instruct)]
     for tf, inst in lst:
-        logits = model.text_decoder(tf, inst).logits[:, :-1]
+        if hasattr(model, "module"):
+            logits = model.module.text_decoder(tf, inst).logits[:, :-1]
+        else:
+            logits = model.text_decoder(tf, inst).logits[:, :-1]
         logits = logits.reshape(-1, logits.shape[-1])
         clip_tokens = inst.flatten()
         loss_text_decoder = loss_text_decoder + loss_ce(logits, clip_tokens)
@@ -188,7 +191,7 @@ def main(args):
 
     # define our model and dataset
     model = InstructCLIP()
-    model.backbone.load_pretrained('ckpts/lddinov2/final.ckpt')
+    model.backbone.load_pretrained('/home/data10T/lpy/mml-proj/ckpts/lddinov2/final.ckpt')
     tokenizer, noise_scheduler, vae, _, _ = get_sd_components(args, accelerator.device, weight_dtype)
     train_dataset, _, train_dataloader, val_dataloader = get_dataloader(args, InstructCLIPDataset, tokenizer)
     

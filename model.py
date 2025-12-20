@@ -133,7 +133,7 @@ class TextDecoder(Model):
         image_features = normalize(image_features)
         
         # load features of all instructions in the dataset
-        text_features = np.load('instructclip_datasets/ip2p_clip_feat.npy')
+        text_features = np.load('/home/data10T/lpy/instructclip_datasets/ip2p_clip_feat.npy')
         text_features = torch.asarray(text_features, dtype=image_features.dtype, device=image_features.device)
         
         # map image features in the text feature space

@@ -1,9 +1,13 @@
-accelerate launch train_instruct_pix2pix.py \
-  --mixed_precision "fp16" \
-  --tracker_project_name "instructclip_ip2p" \
-  --pretrained_model_name_or_path "timbrooks/instruct-pix2pix" \
-  --train_data_dir "instructclip_datasets/InstructCLIP-InstructPix2Pix-Data/" \
-  --output_dir ckpts/ip2p_finetuned_test \
+export HF_HOME="/home/data10T/lpy/.cache/huggingface"
+export HF_ENDPOINT=https://hf-mirror.com
+export CUDA_VISIBLE_DEVICES=5
+
+accelerate launch --num_processes 1 train_instruct_pix2pix.py \
+  --mixed_precision fp16 \
+  --tracker_project_name instructclip_ip2p \
+  --pretrained_model_name_or_path timbrooks/instruct-pix2pix \
+  --train_data_dir /home/data10T/lpy/instructclip_datasets/InstructCLIP-InstructPix2Pix-Data/ \
+  --output_dir /home/data10T/lpy/mml-proj/ckpts/ip2p_finetuned_test \
   --enable_xformers_memory_efficient_attention \
   --resolution 256 \
   --conditioning_dropout_prob 0.05 \
