@@ -1,0 +1,11 @@
+python eval_magicbrush.py \
+  --model_id timbrooks/instruct-pix2pix \
+  --lora_weights ckpts/ip2p_finetuned_test/pytorch_lora_weights.safetensors \
+  --lora_weight_name pytorch_lora_weights.safetensors \
+  --data_root instructclip_datasets/MagicBrush \
+  --split test \
+  --dtype fp16 \
+  --batch_size 4 \
+  --device cuda \
+  --save_dir outputs/magicbrush_preds \
+  --csv_path outputs/magicbrush_eval.csv

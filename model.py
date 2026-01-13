@@ -37,11 +37,11 @@ class LDDinov2(Model):
         super().__init__()
 
         # load DINOv2 backbone
-        self.dino = torch.hub.load("./dinov2", model='dinov2_vitl14', source='local', pretrained=False)
-        # self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
-        weight_path = "./pretrained_weights/dinov2_vitl14_pretrain.pth"
-        state_dict = torch.load(weight_path, map_location='cuda')
-        self.dino.load_state_dict(state_dict)
+        # self.dino = torch.hub.load("./dinov2", model='dinov2_vitl14', source='local', pretrained=False)
+        self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+        # weight_path = "./pretrained_weights/dinov2_vitl14_pretrain.pth"
+        # state_dict = torch.load(weight_path, map_location='cuda')
+        # self.dino.load_state_dict(state_dict)
         
         # change configuration based on latent image input
         self.dino.patch_size = 2
@@ -133,7 +133,7 @@ class TextDecoder(Model):
         image_features = normalize(image_features)
         
         # load features of all instructions in the dataset
-        text_features = np.load('/home/data10T/lpy/instructclip_datasets/ip2p_clip_feat.npy')
+        text_features = np.load('instructclip_datasets/ip2p_clip_feat.npy')
         text_features = torch.asarray(text_features, dtype=image_features.dtype, device=image_features.device)
         
         # map image features in the text feature space

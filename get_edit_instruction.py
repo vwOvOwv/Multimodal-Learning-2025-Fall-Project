@@ -11,18 +11,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--instructclip_ckpt",
         type=str,
-        default="/home/data10T/lpy/mml-proj/ckpts/instructclip/final.ckpt",
+        default="ckpts/instructclip/final.ckpt",
         help=(
             "Path to Instruct-CLIP checkpoint"
         )
-    )
-    parser.add_argument(
-        "--pretrained_model_name_or_path",
-        type=str,
-        default="runwayml/stable-diffusion-v1-5",
-        help=(
-            "sd pretrained checkpoints"
-        ),
     )
     parser.add_argument(
         "--input_path",

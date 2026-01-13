@@ -20,4 +20,9 @@ accelerate launch --num_processes 1 train_instruct_pix2pix.py \
   --seed 42 \
   --rank 32 \
   --alpha 32 \
-  --report_to wandb
+  --report_to wandb \
+  --remove_augment_prob 0.3 \
+  --change_threshold 0.1 \
+  --mask_dilation_iters 1 \
+  --background_consistency_weight 0.05 \
+  --edge_smooth_weight 0.02

@@ -377,7 +377,7 @@ def main():
     
     # define our model and dataset
     iclip = InstructCLIP()
-    iclip.load_pretrained('/home/data10T/lpy/mml-proj/ckpts/instructclip/final.ckpt')
+    iclip.load_pretrained('ckpts/instructclip/final.ckpt')
     iclip.requires_grad_(False).to(accelerator.device, dtype=weight_dtype)
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
@@ -484,6 +484,8 @@ def main():
         unet.train()
         train_mse_loss = 0.0
         train_iclip_loss = 0.0
+        train_bg_loss = 0.0
+        train_edge_loss = 0.0
         for step, batch in enumerate(train_dataloader):
             # Skip steps until we reach the resumed step
             if args.resume_from_checkpoint and epoch == first_epoch and step < resume_step:
@@ -574,8 +576,41 @@ def main():
                 iclip_loss = (1 - F.cosine_similarity(
                     img_feat.float(), text_feat.float(), 
                 ).mean()) * 0.1
+
+                # latent background consistency & boundary smoothness regularization
+                background_loss = torch.tensor(0.0, device=accelerator.device)
+                edge_smooth_loss = torch.tensor(0.0, device=accelerator.device)
+                if args.background_consistency_weight > 0 or args.edge_smooth_weight > 0:
+                    with torch.no_grad():
+                        pixel_diff = (batch["edited_pixel_values"] - batch["original_pixel_values"]).abs().mean(dim=1, keepdim=True)
+                        change_mask = (pixel_diff > args.change_threshold).float()
+                        dilated_mask = change_mask.clone()
+                        for _ in range(max(args.mask_dilation_iters, 0)):
+                            dilated_mask = F.max_pool2d(dilated_mask, kernel_size=3, stride=1, padding=1)
+                        dilated_mask = dilated_mask.clamp(0, 1)
+                        bg_mask = 1 - dilated_mask
+
+                        # Calculate edge mask based on original change mask (single step dilation/erosion)
+                        # Trick: Dilation - Erosion to get a ring area around the edge (edge itself + inner + outer)
+                        edge_mask = F.max_pool2d(change_mask, kernel_size=5, stride=1, padding=2) + F.max_pool2d(-change_mask, kernel_size=5, stride=1, padding=2)
+                        edge_mask = edge_mask.clamp(0, 1)
+
+                        # Use area downsampling to align pixel-domain masks to latent resolution (avoid spatial misalignment from bilinear)
+                        latent_hw = latent_out.shape[-2:]
+                        bg_mask_latent = F.interpolate(bg_mask, size=latent_hw, mode="area")
+                        edge_mask_latent = F.interpolate(edge_mask, size=latent_hw, mode="area")
+
+                    if args.background_consistency_weight > 0:
+                        background_loss = ((latent_out - original_image_embeds).float().pow(2) * bg_mask_latent).mean()
+                    if args.edge_smooth_weight > 0:
+                        edge_smooth_loss = (latent_out - original_image_embeds).abs().mul(edge_mask_latent).mean()
                 
-                loss = mse_loss + iclip_loss
+                loss = (
+                    mse_loss
+                    + iclip_loss
+                    + args.background_consistency_weight * background_loss
+                    + args.edge_smooth_weight * edge_smooth_loss
+                )
 
                 # Gather the losses across all processes for logging (if we use distributed training).
                 avg_mse_loss = accelerator.gather(mse_loss.repeat(args.train_batch_size)).mean()
@@ -583,6 +618,11 @@ def main():
                 
                 avg_iclip_loss = accelerator.gather(iclip_loss.repeat(args.train_batch_size)).mean()
                 train_iclip_loss += avg_iclip_loss.item() / args.gradient_accumulation_steps
+
+                avg_bg_loss = accelerator.gather(background_loss.repeat(args.train_batch_size)).mean()
+                train_bg_loss += avg_bg_loss.item() / args.gradient_accumulation_steps
+                avg_edge_loss = accelerator.gather(edge_smooth_loss.repeat(args.train_batch_size)).mean()
+                train_edge_loss += avg_edge_loss.item() / args.gradient_accumulation_steps
 
                 # Backpropagate
                 accelerator.backward(loss)
@@ -600,14 +640,18 @@ def main():
                 global_step += 1
                 accelerator.log(
                     {
-                        "train_loss": train_mse_loss+train_iclip_loss, 
+                        "train_loss": train_mse_loss+train_iclip_loss + train_bg_loss + train_edge_loss, 
                         "mse_loss": train_mse_loss, 
-                        "iclip_loss": train_iclip_loss
+                        "iclip_loss": train_iclip_loss,
+                        "bg_loss": train_bg_loss,
+                        "edge_loss": train_edge_loss,
                     }, 
                     step=global_step
                 )
                 train_mse_loss = 0.0
                 train_iclip_loss = 0.0
+                train_bg_loss = 0.0
+                train_edge_loss = 0.0
 
                 if global_step % args.checkpointing_steps == 0:
                     if accelerator.is_main_process:
@@ -644,6 +688,8 @@ def main():
                 "step_loss": loss.detach().item(), 
                 "mse_loss": mse_loss.detach().item(), 
                 "iclip_loss": iclip_loss.detach().item(), 
+                "bg_loss": background_loss.detach().item(),
+                "edge_loss": edge_smooth_loss.detach().item(),
                 "lr": lr_scheduler.get_last_lr()[0]
             }
             progress_bar.set_postfix(**logs)

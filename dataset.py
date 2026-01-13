@@ -79,6 +79,7 @@ class InstructPix2PixDataset(Dataset):
     def __init__(self, args, tokenizer, ds, split):
         self.tokenizer = tokenizer
         self.split = split
+        self.remove_augment_prob = getattr(args, "remove_augment_prob", 0.0)
         
         self.ds = ds
         if self.split == 'train':
@@ -105,6 +106,32 @@ class InstructPix2PixDataset(Dataset):
             'do not edit anything',
         ]
         self.maintain_list = [self.tokenize_captions(p) for p in self.maintain_text_list]     
+
+    @staticmethod
+    def _looks_like_add(instruction: str) -> bool:
+        text = instruction.lower()
+        add_triggers = ["add ", "add a", "add an", "put ", "place ", "insert ", "include "]
+        return any(trigger in text for trigger in add_triggers)
+
+    @staticmethod
+    def _swap_to_remove(instruction: str) -> str:
+        text = instruction
+        replacements = {
+            "add a ": "remove the ",
+            "add an ": "remove the ",
+            "add ": "remove ",
+            "put ": "remove ",
+            "place ": "remove ",
+            "insert ": "remove ",
+            "include ": "remove ",
+        }
+        lower_text = text.lower()
+        for k, v in replacements.items():
+            if k in lower_text:
+                idx = lower_text.index(k)
+                text = text[:idx] + text[idx:].replace(k, v, 1)
+                break
+        return text
          
     def __len__(self):
         return len(self.ds)
@@ -122,6 +149,14 @@ class InstructPix2PixDataset(Dataset):
         
         instruction_text = data['instruction']
         old_instruction_text = data['original_instruction']
+
+        # data augmentation for scarce remove samples
+        if self.split == 'train' and self.remove_augment_prob > 0:
+            if self._looks_like_add(instruction_text) and random.random() < self.remove_augment_prob:
+                # swap source/target to synthesize a remove-style example
+                input_image_pil, output_image_pil = output_image_pil, input_image_pil
+                instruction_text = self._swap_to_remove(instruction_text)
+                old_instruction_text = self._swap_to_remove(old_instruction_text)
             
         # random resize and center crop to desired resolution
         resolution = random.randint(*self.resolution_range)

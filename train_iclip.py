@@ -191,7 +191,7 @@ def main(args):
 
     # define our model and dataset
     model = InstructCLIP()
-    model.backbone.load_pretrained('/home/data10T/lpy/mml-proj/ckpts/lddinov2/final.ckpt')
+    model.backbone.load_pretrained('ckpts/lddinov2/final.ckpt')
     tokenizer, noise_scheduler, vae, _, _ = get_sd_components(args, accelerator.device, weight_dtype)
     train_dataset, _, train_dataloader, val_dataloader = get_dataloader(args, InstructCLIPDataset, tokenizer)
     

@@ -1,6 +1,3 @@
-import os
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-
 import argparse
 from PIL import Image
 import numpy as np
@@ -43,6 +40,12 @@ def parse_args():
             "The resolution for input images, all the images in the train/validation dataset will be resized to this"
             " resolution"
         ),
+    )
+    parser.add_argument(
+        "--remove_augment_prob",
+        type=float,
+        default=0,
+        help="Probability to flip add-like samples into synthetic remove cases by swapping source/target images.",
     )
     parser.add_argument(
         "--train_batch_size", type=int, default=4, help="Batch size (per device) for the training dataloader."
@@ -222,6 +225,30 @@ def parse_args():
         type=float,
         default=None,
         help="Conditioning dropout probability. Drops out the conditionings (image and edit prompt) used in training InstructPix2Pix. See section 3.2.1 in the paper: https://arxiv.org/abs/2211.09800.",
+    )
+    parser.add_argument(
+        "--change_threshold",
+        type=float,
+        default=1.0,
+        help="Pixel-level difference threshold (after normalization) to build change masks for background consistency loss.",
+    )
+    parser.add_argument(
+        "--mask_dilation_iters",
+        type=int,
+        default=0,
+        help="Number of 3x3 dilation steps applied to the change mask to cover boundary context.",
+    )
+    parser.add_argument(
+        "--background_consistency_weight",
+        type=float,
+        default=0.0,
+        help="Weight for latent background consistency loss to discourage edits outside the changed region.",
+    )
+    parser.add_argument(
+        "--edge_smooth_weight",
+        type=float,
+        default=0.0,
+        help="Weight for boundary smoothness loss encouraging natural transitions at object edges.",
     )
     parser.add_argument(
         "--rank",

@@ -184,11 +184,7 @@ def main(args):
     model = LDDinov2()
     
     # load DINOv2 checkpoint to compute ground-truth features later
-    # dino_ori = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
-    dino_ori = torch.hub.load("./dinov2", model='dinov2_vitl14', source='local', pretrained=False)
-    weight_path = "./pretrained_weights/dinov2_vitl14_pretrain.pth"
-    state_dict = torch.load(weight_path, map_location='cuda')
-    dino_ori.load_state_dict(state_dict)
+    dino_ori = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
 
     dino_ori.eval().requires_grad_(False).to(accelerator.device, dtype=weight_dtype)
     
